@@ -1,0 +1,122 @@
+/* Estilos adicionais para controles touch */
+.touch-device #touch-controls {
+    display: flex;
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    z-index: 3;
+    pointer-events: auto;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+
+.touch-device .touch-dpad,
+.touch-device .touch-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.touch-device #touch-controls button {
+    width: 60px;
+    height: 60px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 2px solid #0df2c9;
+    border-radius: 50%;
+    color: #0df2c9;
+    font-size: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.touch-device #touch-controls button:active {
+    background-color: rgba(13, 242, 201, 0.3);
+}
+
+/* Ajustes para alta resolução */
+.high-dpi #game-canvas {
+    image-rendering: auto;
+}
+
+/* Ajustes específicos para navegadores */
+.firefox #hack-canvas {
+    image-rendering: -moz-crisp-edges;
+}
+
+.safari #hack-canvas {
+    image-rendering: pixelated;
+}
+
+/* Ajustes para telas pequenas */
+@media (max-width: 768px) {
+    #energy-bar-container {
+        width: 150px;
+    }
+    
+    #karma-indicator {
+        width: 40px;
+        height: 40px;
+    }
+    
+    #dialogue-box {
+        width: 95%;
+        max-width: none;
+    }
+    
+    .loading-content h1, 
+    .start-content h1 {
+        font-size: 28px;
+    }
+    
+    #start-button {
+        padding: 10px 30px;
+        font-size: 20px;
+    }
+    
+    .controls-info {
+        font-size: 14px;
+    }
+    
+    #hack-canvas {
+        width: 95%;
+        height: 70%;
+    }
+}
+
+/* Ajustes para telas muito pequenas */
+@media (max-width: 480px) {
+    #energy-bar-container {
+        width: 100px;
+    }
+    
+    #karma-indicator {
+        width: 30px;
+        height: 30px;
+    }
+    
+    #karma-value {
+        font-size: 14px;
+    }
+    
+    .dialogue-option {
+        padding: 5px 10px;
+        font-size: 14px;
+    }
+    
+    #dialogue-text {
+        font-size: 16px;
+    }
+    
+    .loading-content h1, 
+    .start-content h1 {
+        font-size: 24px;
+    }
+    
+    .touch-device #touch-controls button {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+}

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neuromancer: Sombra na Matrix</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        /* Estilos de emergência para tela de carregamento */
+        #emergency-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            color: #00FFFF;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            font-family: 'Press Start 2P', monospace;
+        }
+        
+        #emergency-loading h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        #emergency-loading p {
+            font-size: 16px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        #emergency-progress {
+            width: 70%;
+            height: 20px;
+            border: 2px solid #00FFFF;
+            margin: 20px 0;
+        }
+        
+        #emergency-progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #00FFFF;
+            transition: width 0.3s;
+        }
+        
+        #emergency-message {
+            color: #FF00FF;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        
+        #emergency-retry {
+            background-color: #00FFFF;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin-top: 20px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', monospace;
+            display: none;
+        }
+        
+        .touch-btn {
+            background-color: rgba(0, 255, 255, 0.3);
+            border: 2px solid #00FFFF;
+            color: #FFFFFF;
+            font-size: 24px;
+            width: 60px;
+            height: 60px;
+            margin: 0 10px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+</head>
+<body>
+    <!-- Tela de carregamento de emergência -->
+    <div id="emergency-loading">
+        <h1>NEUROMANCER</h1>
+        <p>SOMBRA NA MATRIX</p>
+        <div id="emergency-progress">
+            <div id="emergency-progress-bar"></div>
+        </div>
+        <p id="emergency-loading-text">Carregando... 0%</p>
+        <div id="emergency-message"></div>
+        <button id="emergency-retry">Tentar Novamente</button>
+    </div>
+
+    <div id="game-container">
+        <!-- Canvas principal do jogo -->
+        <canvas id="game-canvas"></canvas>
+        
+        <!-- Interface do Usuário (UI) -->
+        <div id="ui-container">
+            <div id="energy-bar-container">
+                <div id="energy-bar"></div>
+            </div>
+            <div id="karma-indicator">Karma: 0</div>
+            <div id="mission-list">Missões:</div>
+        </div>
+        
+        <!-- Caixa de Diálogo (oculta inicialmente) -->
+        <div id="dialogue-box" class="hidden">
+            <div id="dialogue-text"></div>
+            <div id="dialogue-options"></div>
+        </div>
+        
+        <!-- Minigame de Hack (oculto inicialmente) -->
+        <div id="hack-minigame" class="hidden">
+            <div id="hack-header">
+                <span id="hack-timer">60</span>s
+                <span id="hack-status">CONECTANDO...</span>
+            </div>
+            <canvas id="hack-canvas"></canvas>
+        </div>
+        
+        <!-- Controles de Toque (serão adicionados via JS se necessário) -->
+        <div id="touch-controls-container"></div>
+    </div>
+
+    <!-- Scripts de emergência para garantir carregamento -->
+    <script>
+        // Sistema de carregamento de emergência (mantido como antes)
+        let emergencyLoadingProgress = 0;
+        let emergencyLoadingFailed = false;
+        let emergencyLoadingStartTime = Date.now();
+        const emergencyLoadingTimeout = 30000; // 30 segundos
+        
+        function updateEmergencyLoading(progress, message = '') {
+            const progressBar = document.getElementById('emergency-progress-bar');
+            const loadingText = document.getElementById('emergency-loading-text');
+            const messageElement = document.getElementById('emergency-message');
+            
+            if (progressBar && loadingText) {
+                emergencyLoadingProgress = progress;
+                progressBar.style.width = `${progress * 100}%`;
+                loadingText.textContent = `Carregando... ${Math.floor(progress * 100)}%`;
+                
+                if (message) {
+                    messageElement.textContent = message;
+                }
+            }
+            
+            // Verificar timeout
+            const currentTime = Date.now();
+            if (currentTime - emergencyLoadingStartTime > emergencyLoadingTimeout && !emergencyLoadingFailed) {
+                emergencyLoadingFailed = true;
+                handleEmergencyLoadingFailure();
+            }
+        }
+        
+        function handleEmergencyLoadingFailure() {
+            const messageElement = document.getElementById('emergency-message');
+            const retryButton = document.getElementById('emergency-retry');
+            
+            messageElement.textContent = 'Carregamento demorou mais que o esperado. Verifique sua conexão.';
+            retryButton.style.display = 'block';
+            
+            retryButton.addEventListener('click', () => {
+                location.reload();
+            });
+        }
+        
+        function hideEmergencyLoading() {
+            const emergencyLoading = document.getElementById('emergency-loading');
+            if (emergencyLoading) {
+                emergencyLoading.style.opacity = '0';
+                emergencyLoading.style.transition = 'opacity 1s';
+                setTimeout(() => {
+                    emergencyLoading.style.display = 'none';
+                }, 1000);
+            }
+        }
+        
+        // Iniciar com 5% para mostrar progresso
+        updateEmergencyLoading(0.05, 'Inicializando...');
+        
+        // Verificar se os scripts principais carregaram após um tempo
+        setTimeout(() => {
+            if (typeof window.game === 'undefined') {
+                updateEmergencyLoading(0.2, 'Carregando scripts principais...');
+                
+               const scripts = [
+                    'js/utils.js',
+                    'js/assets.js',
+                    'js/player.js',
+                    'js/world.js',
+                    'js/dialogue.js',
+                    'js/hack.js',
+                    'js/phases.js',
+                    'js/endings.js',
+                    'js/game.js'
+                ];
+                let loadedScripts = 0;
+                
+                scripts.forEach((src, index) => {
+                    const script = document.createElement('script');
+                    script.src = src;
+                    script.async = false; // Manter ordem de carregamento
+                    
+                    script.onload = () => {
+                        loadedScripts++;
+                        updateEmergencyLoading(0.2 + (loadedScripts / scripts.length) * 0.6, 
+                            `Carregado: ${src.split('/').pop()}`);
+                        
+                        // Se todos os scripts carregaram, verificar se o jogo iniciou
+                        if (loadedScripts === scripts.length) {
+                            setTimeout(() => {
+                                if (typeof window.game === 'undefined') {
+                                    updateEmergencyLoading(0.9, 'Iniciando jogo manualmente...');
+                                    
+                                    // Tentar iniciar o jogo manualmente
+                                    try {
+                                        window.game = new Game();
+                                        updateEmergencyLoading(1, 'Jogo iniciado!');
+                                        setTimeout(hideEmergencyLoading, 1000);
+                                    } catch (error) {
+                                        console.error('Erro ao iniciar jogo manualmente:', error);
+                                        handleEmergencyLoadingFailure();
+                                    }
+                                } else {
+                                    updateEmergencyLoading(1, 'Jogo iniciado!');
+                                    setTimeout(hideEmergencyLoading, 1000);
+                                }
+                            }, 2000);
+                        }
+                    };
+                    
+                    script.onerror = () => {
+                        updateEmergencyLoading(0.2 + (index / scripts.length) * 0.6, 
+                            `ERRO ao carregar: ${src.split('/').pop()}`);
+                        
+                        // Continuar mesmo com erro
+                        loadedScripts++;
+                    };
+                    
+                    document.body.appendChild(script);
+                });
+            } else {
+                // Jogo já foi iniciado normalmente
+                updateEmergencyLoading(1, 'Jogo iniciado!');
+                setTimeout(hideEmergencyLoading, 1000);
+            }
+        }, 5000);
+        
+        // Verificar periodicamente se o jogo foi iniciado
+        const gameCheckInterval = setInterval(() => {
+            if (typeof window.game !== 'undefined' && window.game.gameState !== 'loading') {
+                updateEmergencyLoading(1, 'Jogo iniciado!');
+                setTimeout(hideEmergencyLoading, 1000);
+                clearInterval(gameCheckInterval);
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
