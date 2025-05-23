@@ -1,5 +1,5 @@
 // Classe para gerenciar as fases do jogo
-class PhaseManager {
+class GamePhases {
     constructor(game) {
         this.game = game;
         this.currentPhase = 'chiba'; // Fase inicial
@@ -109,14 +109,13 @@ class PhaseManager {
                     }
                 ],
                 boundaries: [
-                    { x: 0, y: 450, width: 1280, height: 50 }, // Chão
-                    { x: -50, y: 0, width: 50, height: 720 }, // Parede esquerda
-                    { x: 1280, y: 0, width: 50, height: 720 } // Parede direita
+                    { x: -50, y: 0, width: 50, height: 720 },  // Parede esquerda
+                    { x: 1280, y: 0, width: 50, height: 720 }  // Parede direita
                 ],
                 onEnter: () => {
                     console.log("Entrando em Chiba City");
                     this.game.player.x = 100;
-                    this.game.player.y = 400;
+                    this.game.player.y = this.game.height - this.game.player.height - 50;
                     this.game.camera.target = this.game.player;
                 }
             },

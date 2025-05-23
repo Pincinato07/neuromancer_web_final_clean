@@ -16,18 +16,28 @@ const Assets = {
         { name: 'player_idle', src: 'assets/sprites/player_idle.png' },
         { name: 'player_walk', src: 'assets/sprites/player_walk.png' },
         { name: 'chiba_city_bg', src: 'assets/sprites/chiba_city_bg.png' },
+        { name: 'matrix_zone_bg', src: 'assets/sprites/matrix_zone_bg.png' },
+        { name: 'ziggurat_tower_bg', src: 'assets/sprites/ziggurat_tower_bg.png' },
+        { name: 'straylight_bg', src: 'assets/sprites/straylight_bg.png' },
+        { name: 'core_bg', src: 'assets/sprites/core_bg.png' },
         { name: 'terminal', src: 'assets/sprites/terminal.png' },
         { name: 'npc_contact', src: 'assets/sprites/npc_contact.png' },
+        { name: 'wintermute', src: 'assets/sprites/wintermute.png' },
+        { name: 'sombra', src: 'assets/sprites/sombra.png' },
+        { name: 'flatline', src: 'assets/sprites/flatline.png' },
         { name: 'hack_interface', src: 'assets/sprites/hack_interface.png' },
         { name: 'data_nodes', src: 'assets/sprites/data_nodes.png' }
     ],
     
     soundFiles: [
         { name: 'background_music', src: 'assets/audio/background_music.mp3' },
+        { name: 'footstep', src: 'assets/audio/footstep.mp3' },
+        { name: 'interact', src: 'assets/audio/interact.mp3' },
         { name: 'hack_start', src: 'assets/audio/hack_start.mp3' },
         { name: 'hack_success', src: 'assets/audio/hack_success.mp3' },
         { name: 'hack_fail', src: 'assets/audio/hack_fail.mp3' },
-        { name: 'footstep', src: 'assets/audio/footstep.mp3' }
+        { name: 'transition', src: 'assets/audio/transition.mp3' },
+        { name: 'ending', src: 'assets/audio/ending.mp3' }
     ],
     
     // Inicializa o carregamento de assets
@@ -50,149 +60,126 @@ const Assets = {
     
     // Cria assets temporários para desenvolvimento
     createTempAssets: function() {
-        // Cria canvas temporário
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d');
-        
-        // Tamanhos padrão
-        tempCanvas.width = 64;
-        tempCanvas.height = 64;
-        
-        // Cria player_idle
-        tempCtx.fillStyle = '#0df2c9';
-        tempCtx.fillRect(16, 8, 32, 48);
-        tempCtx.fillStyle = '#ff00ff';
-        tempCtx.fillRect(24, 16, 16, 8); // Rosto
-        this.createTempImage('player_idle', tempCanvas.toDataURL());
-        
-        // Cria player_walk (2 frames)
-        tempCanvas.width = 128; // 2 frames
-        tempCtx.fillStyle = '#0df2c9';
-        tempCtx.fillRect(16, 12, 32, 44); // Frame 1
-        tempCtx.fillRect(80, 8, 32, 48); // Frame 2
-        tempCtx.fillStyle = '#ff00ff';
-        tempCtx.fillRect(24, 20, 16, 8); // Rosto frame 1
-        tempCtx.fillRect(88, 16, 16, 8); // Rosto frame 2
-        this.createTempImage('player_walk', tempCanvas.toDataURL());
-        
-        // Cria background de Chiba City
-        tempCanvas.width = 1280;
-        tempCanvas.height = 720;
-        
-        // Fundo escuro
-        tempCtx.fillStyle = '#0a0a0a';
-        tempCtx.fillRect(0, 0, 1280, 720);
-        
-        // Chão
-        tempCtx.fillStyle = '#222222';
-        tempCtx.fillRect(0, 600, 1280, 120);
-        
-        // Prédios de fundo
-        for (let i = 0; i < 10; i++) {
-            const height = 200 + Math.random() * 300;
-            const width = 80 + Math.random() * 120;
-            const x = i * 130;
-            
-            // Prédio
-            tempCtx.fillStyle = `rgb(${20 + i * 5}, ${20 + i * 2}, ${30 + i * 3})`;
-            tempCtx.fillRect(x, 600 - height, width, height);
-            
-            // Janelas
-            tempCtx.fillStyle = '#ff00ff';
-            for (let j = 0; j < 5; j++) {
-                for (let k = 0; k < Math.floor(height / 40); k++) {
-                    if (Math.random() > 0.3) {
-                        tempCtx.fillRect(x + 10 + j * (width / 6), 620 - height + k * 40, 10, 20);
-                    }
-                }
-            }
+        // Backgrounds das fases
+        const backgrounds = {
+            'chiba_city_bg': Assets.createTempBackground('#1a1a1a', '#00FFFF', 'Chiba City'),
+            'matrix_zone_bg': Assets.createTempBackground('#000000', '#00FF00', 'Matrix Zone'),
+            'ziggurat_tower_bg': Assets.createTempBackground('#2a2a2a', '#FF00FF', 'Ziggurat Tower'),
+            'straylight_bg': Assets.createTempBackground('#1a1a1a', '#FFFFFF', 'Straylight'),
+            'core_bg': Assets.createTempBackground('#000000', '#FF0000', 'Core')
+        };
+
+        // Personagens
+        const characters = {
+            'wintermute': Assets.createTempCharacter('#FFFFFF', '#00FFFF', 'W'),
+            'sombra': Assets.createTempCharacter('#000000', '#FF00FF', 'S'),
+            'flatline': Assets.createTempCharacter('#FF0000', '#FFFFFF', 'F')
+        };
+
+        // Objetos
+        const objects = {
+            'terminal': Assets.createTempObject('#00FFFF', '#000000', 'T'),
+            'npc_contact': Assets.createTempCharacter('#FF00FF', '#FFFFFF', 'C')
+        };
+
+        // Sons temporários
+        const sounds = {
+            'footstep': new Audio(),
+            'interact': new Audio(),
+            'transition': new Audio(),
+            'ending': new Audio()
+        };
+
+        // Adiciona todos os assets temporários
+        Object.entries(backgrounds).forEach(([key, value]) => this.images[key] = value);
+        Object.entries(characters).forEach(([key, value]) => this.images[key] = value);
+        Object.entries(objects).forEach(([key, value]) => this.images[key] = value);
+        Object.entries(sounds).forEach(([key, value]) => this.sounds[key] = value);
+    },
+    
+    createTempBackground: function(bgColor, neonColor, text) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1280;
+        canvas.height = 720;
+        const ctx = canvas.getContext('2d');
+
+        // Fundo
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Efeito de grade
+        ctx.strokeStyle = neonColor;
+        ctx.lineWidth = 1;
+        for (let i = 0; i < canvas.width; i += 40) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i, canvas.height);
+            ctx.stroke();
         }
-        
-        // Néon
-        tempCtx.fillStyle = '#0df2c9';
-        tempCtx.fillRect(200, 400, 200, 50);
-        tempCtx.fillStyle = '#000000';
-        tempCtx.font = '30px monospace';
-        tempCtx.fillText('HOTEL', 250, 435);
-        
-        tempCtx.fillStyle = '#ff00ff';
-        tempCtx.fillRect(600, 350, 150, 40);
-        tempCtx.fillStyle = '#000000';
-        tempCtx.fillText('BAR', 650, 380);
-        
-        this.createTempImage('chiba_city_bg', tempCanvas.toDataURL());
-        
-        // Cria terminal
-        tempCanvas.width = 64;
-        tempCanvas.height = 96;
-        tempCtx.fillStyle = '#333333';
-        tempCtx.fillRect(8, 16, 48, 80);
-        tempCtx.fillStyle = '#0df2c9';
-        tempCtx.fillRect(16, 24, 32, 24);
-        tempCtx.fillStyle = '#222222';
-        tempCtx.fillRect(16, 56, 32, 32);
-        this.createTempImage('terminal', tempCanvas.toDataURL());
-        
-        // Cria NPC
-        tempCanvas.width = 64;
-        tempCanvas.height = 64;
-        tempCtx.fillStyle = '#ff5500';
-        tempCtx.fillRect(16, 8, 32, 48);
-        tempCtx.fillStyle = '#ffffff';
-        tempCtx.fillRect(24, 16, 16, 8); // Rosto
-        this.createTempImage('npc_contact', tempCanvas.toDataURL());
-        
-        // Cria interface de hack
-        tempCanvas.width = 800;
-        tempCanvas.height = 600;
-        tempCtx.fillStyle = '#000000';
-        tempCtx.fillRect(0, 0, 800, 600);
-        
-        // Grade de fundo
-        tempCtx.strokeStyle = '#0df2c9';
-        tempCtx.lineWidth = 1;
-        for (let i = 0; i < 20; i++) {
-            tempCtx.beginPath();
-            tempCtx.moveTo(0, i * 30);
-            tempCtx.lineTo(800, i * 30);
-            tempCtx.stroke();
-            
-            tempCtx.beginPath();
-            tempCtx.moveTo(i * 40, 0);
-            tempCtx.lineTo(i * 40, 600);
-            tempCtx.stroke();
+        for (let i = 0; i < canvas.height; i += 40) {
+            ctx.beginPath();
+            ctx.moveTo(0, i);
+            ctx.lineTo(canvas.width, i);
+            ctx.stroke();
         }
-        
-        // Borda
-        tempCtx.strokeStyle = '#ff00ff';
-        tempCtx.lineWidth = 4;
-        tempCtx.strokeRect(2, 2, 796, 596);
-        
-        this.createTempImage('hack_interface', tempCanvas.toDataURL());
-        
-        // Cria nós de dados
-        tempCanvas.width = 192; // 3 tipos
-        tempCanvas.height = 64;
-        
-        // Nó vermelho (dados)
-        tempCtx.fillStyle = '#ff0000';
-        tempCtx.beginPath();
-        tempCtx.arc(32, 32, 24, 0, Math.PI * 2);
-        tempCtx.fill();
-        
-        // Nó verde (acesso)
-        tempCtx.fillStyle = '#00ff00';
-        tempCtx.beginPath();
-        tempCtx.arc(96, 32, 24, 0, Math.PI * 2);
-        tempCtx.fill();
-        
-        // Nó azul (segurança)
-        tempCtx.fillStyle = '#0000ff';
-        tempCtx.beginPath();
-        tempCtx.arc(160, 32, 24, 0, Math.PI * 2);
-        tempCtx.fill();
-        
-        this.createTempImage('data_nodes', tempCanvas.toDataURL());
+
+        // Texto da fase
+        ctx.font = '48px "Press Start 2P"';
+        ctx.fillStyle = neonColor;
+        ctx.textAlign = 'center';
+        ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+        return canvas;
+    },
+    
+    createTempCharacter: function(bgColor, textColor, text) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+
+        // Corpo
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(16, 8, 32, 48);
+
+        // Cabeça
+        ctx.beginPath();
+        ctx.arc(32, 16, 12, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Texto
+        ctx.font = '24px "Press Start 2P"';
+        ctx.fillStyle = textColor;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, 32, 32);
+
+        return canvas;
+    },
+    
+    createTempObject: function(bgColor, textColor, text) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+
+        // Base
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(8, 8, 48, 48);
+
+        // Detalhes
+        ctx.strokeStyle = textColor;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(12, 12, 40, 40);
+
+        // Texto
+        ctx.font = '24px "Press Start 2P"';
+        ctx.fillStyle = textColor;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, 32, 32);
+
+        return canvas;
     },
     
     // Cria uma imagem temporária a partir de um dataURL

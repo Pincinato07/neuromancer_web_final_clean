@@ -1,5 +1,5 @@
 // Sistema de finais do jogo
-class EndingSystem {
+class GameEndings {
     constructor(game) {
         this.game = game;
         this.endings = {

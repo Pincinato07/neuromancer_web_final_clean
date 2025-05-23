@@ -1,11 +1,11 @@
 // Classe do jogador
 class Player {
-    constructor(game, x, y) {
+    constructor(game, x = 100, y = undefined) {
         this.game = game;
+        this.width = 64;
+        this.height = 64;
         this.x = x;
-        this.y = y;
-        this.width = 32;
-        this.height = 48;
+        this.y = y || game.height - this.height - 50; // 50 pixels acima do chão
         this.speed = 5;
         this.sprintSpeed = 8;
         this.velocityX = 0;
@@ -18,13 +18,14 @@ class Player {
         this.maxEnergy = 100;
         this.energyRegenRate = 0.2;
         this.energySprintCost = 0.5;
+        this.isOnGround = true;
         
         // Animação
         this.frameX = 0;
         this.frameY = 0;
-        this.maxFrames = 2; // 2 frames de animação para andar
+        this.maxFrames = 2;
         this.frameTimer = 0;
-        this.frameInterval = 150; // Tempo entre frames em ms
+        this.frameInterval = 150;
         
         // Interação
         this.interactionRadius = 50;
@@ -32,7 +33,6 @@ class Player {
     }
     
     update(deltaTime) {
-        this.game.log("    [Player] Iniciando update...");
         try {
             // Movimento horizontal
             if (this.game.keys.ArrowRight || this.game.keys.KeyD) {
@@ -47,6 +47,17 @@ class Player {
                 this.velocityX = 0;
                 this.isMoving = false;
             }
+
+            // Movimento vertical
+            if (this.game.keys.ArrowUp || this.game.keys.KeyW) {
+                this.velocityY = this.isSprinting ? -this.sprintSpeed : -this.speed;
+                this.isMoving = true;
+            } else if (this.game.keys.ArrowDown || this.game.keys.KeyS) {
+                this.velocityY = this.isSprinting ? this.sprintSpeed : this.speed;
+                this.isMoving = true;
+            } else {
+                this.velocityY = 0;
+            }
             
             // Sprint
             if ((this.game.keys.ShiftLeft || this.game.keys.ShiftRight) && this.energy > 0 && this.isMoving) {
@@ -55,22 +66,59 @@ class Player {
                 if (this.energy < 0) this.energy = 0;
             } else {
                 this.isSprinting = false;
-                // Regenera energia quando não está sprintando
                 if (this.energy < this.maxEnergy) {
                     this.energy += this.energyRegenRate;
                     if (this.energy > this.maxEnergy) this.energy = this.maxEnergy;
                 }
             }
             
-            // Atualiza posição
-            this.x += this.velocityX;
+            // Atualiza posição com verificação de colisão
+            const nextX = this.x + this.velocityX;
+            const nextY = this.y + this.velocityY;
+            
+            // Verifica colisões com limites da fase
+            const phase = this.game.phases.getCurrentPhase();
+            let canMoveX = true;
+            let canMoveY = true;
+            
+            if (phase && phase.boundaries) {
+                const playerRectX = {
+                    x: nextX,
+                    y: this.y,
+                    width: this.width,
+                    height: this.height
+                };
+                
+                const playerRectY = {
+                    x: this.x,
+                    y: nextY,
+                    width: this.width,
+                    height: this.height
+                };
+                
+                for (const boundary of phase.boundaries) {
+                    if (Utils.collisionCheck(playerRectX, boundary)) {
+                        canMoveX = false;
+                    }
+                    if (Utils.collisionCheck(playerRectY, boundary)) {
+                        canMoveY = false;
+                    }
+                }
+            }
+            
+            // Move apenas se não houver colisão
+            if (canMoveX) {
+                this.x = nextX;
+            }
+            if (canMoveY) {
+                this.y = nextY;
+            }
             
             // Limites da tela
             if (this.x < 0) this.x = 0;
             if (this.x > this.game.width - this.width) this.x = this.game.width - this.width;
-            
-            // Colisão com o chão (fixo em y)
-            this.y = 550; // Posição fixa no chão
+            if (this.y < 0) this.y = 0;
+            if (this.y > this.game.height - this.height) this.y = this.game.height - this.height;
             
             // Animação
             if (this.isMoving) {
@@ -80,7 +128,7 @@ class Player {
                     this.frameX = (this.frameX + 1) % this.maxFrames;
                 }
             } else {
-                this.frameX = 0; // Frame parado
+                this.frameX = 0;
             }
             
             // Verifica interações
@@ -100,57 +148,49 @@ class Player {
             const energyBar = document.getElementById("energy-bar");
             if (energyBar) {
                 energyBar.style.width = `${this.energy}%`;
-            } else {
-                this.game.log("ERRO: Elemento #energy-bar não encontrado no DOM!");
             }
-            this.game.log("    [Player] Update concluído.");
         } catch (error) {
-            this.game.log(`ERRO CRÍTICO durante [Player] update: ${error.message} \n ${error.stack}`);
+            console.error('Erro no update do player:', error);
             this.game.gameState = "error";
         }
     }
     
     draw(context) {
-        this.game.log("    [Player] Iniciando draw...");
         try {
             // Desenha o jogador
-            this.game.log("      [Player] Tentando obter assets playerIdle/playerWalk...");
-            const idleImage = window.AssetManager.get("playerIdle");
-            const walkImage = window.AssetManager.get("playerWalk");
+            const idleImage = this.game.assets.images['player_idle'];
+            const walkImage = this.game.assets.images['player_walk'];
             
             if (!idleImage || !walkImage) {
-                this.game.log("ERRO: Assets do jogador (playerIdle/playerWalk) não encontrados ou não carregados!");
                 // Desenhar placeholder de erro
                 context.fillStyle = "#FF0000";
                 context.fillRect(this.x, this.y, this.width, this.height);
                 context.fillStyle = "#FFFFFF";
                 context.fillText("ERR", this.x + 5, this.y + 20);
-                this.game.log("    [Player] Draw interrompido (falha nos assets).");
                 return;
             }
             
             const image = this.isMoving ? walkImage : idleImage;
-            this.game.log(`      [Player] Usando imagem: ${this.isMoving ? "playerWalk" : "playerIdle"}`);
             
             // Calcula a posição do frame na spritesheet
             const frameWidth = image.width / this.maxFrames;
             const frameHeight = image.height;
-            this.game.log(`      [Player] Frame: ${this.frameX}, Width: ${frameWidth}, Height: ${frameHeight}`);
+            
+            // Limpa a área antes de desenhar (remove o rastro cinza)
+            context.clearRect(this.x - 1, this.y - 1, this.width + 2, this.height + 2);
             
             // Desenha o frame atual
             context.save();
             if (this.direction === -1) {
                 // Inverte horizontalmente se estiver olhando para a esquerda
-                this.game.log(`      [Player] Desenhando invertido em (${this.x}, ${this.y})`);
-                context.translate(this.x + this.width, this.y); // Corrigido: translate usa this.y
+                context.translate(this.x + this.width, this.y);
                 context.scale(-1, 1);
                 context.drawImage(
                     image,
                     this.frameX * frameWidth, 0, frameWidth, frameHeight,
-                    0, 0, this.width, this.height // Corrigido: desenha em 0,0 após translate
+                    0, 0, this.width, this.height
                 );
             } else {
-                this.game.log(`      [Player] Desenhando normal em (${this.x}, ${this.y})`);
                 context.drawImage(
                     image,
                     this.frameX * frameWidth, 0, frameWidth, frameHeight,
@@ -160,16 +200,14 @@ class Player {
             context.restore();
             
             // Desenha círculo de interação (para debug)
-            if (this.game.debugMode) { // Corrigido: usa this.game.debugMode
-                this.game.log("      [Player] Desenhando círculo de interação (debug)...");
+            if (this.game.debugMode) {
                 context.strokeStyle = "#0df2c9";
                 context.beginPath();
                 context.arc(this.x + this.width/2, this.y + this.height/2, this.interactionRadius, 0, Math.PI * 2);
                 context.stroke();
             }
-            this.game.log("    [Player] Draw concluído.");
         } catch (error) {
-            this.game.log(`ERRO CRÍTICO durante [Player] draw: ${error.message} \n ${error.stack}`);
+            console.error('Erro no draw do player:', error);
             this.game.gameState = "error";
         }
     }

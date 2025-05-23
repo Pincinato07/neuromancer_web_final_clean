@@ -1,18 +1,33 @@
 // Classe principal do jogo
 class Game {
     constructor() {
+        console.log('Construtor do Game chamado!');
         // Canvas e contexto
         this.canvas = document.getElementById('game-canvas');
         this.ctx = this.canvas.getContext('2d');
         
-        // Dimensões do canvas
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
+        // Dimensões do canvas e do jogo
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
+        
+        // Centraliza o canvas na tela
+        this.canvas.style.position = 'absolute';
+        this.canvas.style.left = '50%';
+        this.canvas.style.top = '50%';
+        this.canvas.style.transform = 'translate(-50%, -50%)';
+        this.canvas.style.backgroundColor = '#000';
+        
+        // Adiciona listener para redimensionamento
+        window.addEventListener('resize', this.resize.bind(this));
+        this.resize();
         
         // Estado do jogo
         this.running = false;
         this.loading = true;
         this.loadingProgress = 0;
+        this.debugMode = false; // Modo debug
         
         // Tempo
         this.lastTime = 0;
@@ -27,7 +42,7 @@ class Game {
         this.player = new Player(this);
         this.world = new World(this);
         this.camera = new Camera(this);
-        this.dialogue = new DialogueSystem(this);
+        this.dialogue = new Dialogue(this);
         this.hackMinigame = new HackMinigame(this);
         this.phases = new GamePhases(this);
         this.endings = new GameEndings(this);
@@ -46,14 +61,17 @@ class Game {
         // Carrega os assets iniciais
         this.loadAssets();
         
-        // Inicia o loop do jogo quando os assets estiverem carregados
-        this.assets.onLoadComplete = () => {
-            this.loading = false;
-            this.showStartScreen();
-        };
-        
         // Habilita suporte a touch para o minigame de hack
         this.hackMinigame.enableTouchSupport();
+        
+        this.updateMissionList();
+    }
+    
+    // Função de log para debug
+    log(message) {
+        if (this.debugMode) {
+            console.log(message);
+        }
     }
     
     // Configura os controles do jogo
@@ -80,65 +98,51 @@ class Game {
     
     // Carrega os assets do jogo
     loadAssets() {
-        // Imagens
-        this.assets.loadImage('player_idle', 'assets/sprites/player_idle.png');
-        this.assets.loadImage('player_walk', 'assets/sprites/player_walk.png');
-        this.assets.loadImage('chiba_city_bg', 'assets/sprites/chiba_city_bg.png');
-        this.assets.loadImage('matrix_zone_bg', 'assets/sprites/matrix_zone_bg.png');
-        this.assets.loadImage('ziggurat_tower_bg', 'assets/sprites/ziggurat_tower_bg.png');
-        this.assets.loadImage('straylight_bg', 'assets/sprites/straylight_bg.png');
-        this.assets.loadImage('core_bg', 'assets/sprites/core_bg.png');
-        this.assets.loadImage('terminal', 'assets/sprites/terminal.png');
-        this.assets.loadImage('npc_contact', 'assets/sprites/npc_contact.png');
-        this.assets.loadImage('wintermute', 'assets/sprites/wintermute.png');
-        this.assets.loadImage('sombra', 'assets/sprites/sombra.png');
-        this.assets.loadImage('flatline', 'assets/sprites/flatline.png');
-        this.assets.loadImage('hack_interface', 'assets/sprites/hack_interface.png');
-        this.assets.loadImage('data_nodes', 'assets/sprites/data_nodes.png');
-        
-        // Sons
-        this.assets.loadSound('footstep', 'assets/audio/footstep.mp3');
-        this.assets.loadSound('interact', 'assets/audio/interact.mp3');
-        this.assets.loadSound('hack_start', 'assets/audio/hack_start.mp3');
-        this.assets.loadSound('hack_success', 'assets/audio/hack_success.mp3');
-        this.assets.loadSound('hack_fail', 'assets/audio/hack_fail.mp3');
-        this.assets.loadSound('transition', 'assets/audio/transition.mp3');
-        this.assets.loadSound('ending', 'assets/audio/ending.mp3');
+        // Inicializa o carregamento de assets
+        this.assets.init(() => {
+            this.loading = false;
+            this.showStartScreen();
+        });
     }
     
     // Carrega os assets específicos da fase atual
     loadPhaseAssets() {
         const phase = this.phases.getCurrentPhase();
         
-        // Carrega o background da fase
-        if (phase.background) {
-            this.assets.loadImage(phase.background, `assets/sprites/${phase.background}.png`);
-        }
-        
-        // Carrega sprites de NPCs
-        phase.npcs.forEach(npc => {
-            if (npc.sprite) {
-                this.assets.loadImage(npc.sprite, `assets/sprites/${npc.sprite}.png`);
-            }
-        });
-        
-        // Carrega sprites de objetos
-        phase.objects.forEach(obj => {
-            if (obj.sprite) {
-                this.assets.loadImage(obj.sprite, `assets/sprites/${obj.sprite}.png`);
-            }
-        });
+        // Os assets já foram carregados pelo sistema de assets temporários
+        // Não é necessário carregar novamente
+        console.log(`Carregando assets da fase: ${phase.name}`);
     }
     
     // Mostra a tela de início
     showStartScreen() {
-        document.getElementById('loading-screen').classList.add('hidden');
-        document.getElementById('start-screen').classList.remove('hidden');
-        
-        document.getElementById('start-button').addEventListener('click', () => {
-            document.getElementById('start-screen').classList.add('hidden');
+        const loadingScreen = document.getElementById('loading-screen');
+        const startScreen = document.getElementById('start-screen');
+        const startButton = document.getElementById('start-button');
+
+        // Se a tela de loading existir, esconde ela
+        if (loadingScreen) {
+            loadingScreen.classList.add('hidden');
+        }
+
+        // Se a tela de início existir, mostra ela
+        if (startScreen) {
+            startScreen.classList.remove('hidden');
+
+            // Se o botão de início existir, adiciona o evento de clique
+            if (startButton) {
+                startButton.addEventListener('click', () => {
+                    startScreen.classList.add('hidden');
+                    this.start();
+                });
+            } else {
+                // Se não houver botão, inicia o jogo diretamente
+                this.start();
+            }
+        } else {
+            // Se não houver tela de início, inicia o jogo diretamente
             this.start();
-        });
+        }
     }
     
     // Inicia o jogo
@@ -259,78 +263,75 @@ class Game {
         // Reseta o objeto interativo atual
         this.currentInteractable = null;
         
-        // Verifica NPCs
+        // Obtém a fase atual
         const phase = this.phases.getCurrentPhase();
+        if (!phase) return;
         
-        // Verifica colisão com NPCs
-        for (const npc of phase.npcs) {
-            const npcRect = {
-                x: npc.x - 32,
-                y: npc.y - 32,
-                width: 64,
-                height: 64
-            };
-            
-            const playerRect = {
-                x: this.player.x - this.player.width / 2,
-                y: this.player.y - this.player.height / 2,
-                width: this.player.width,
-                height: this.player.height
-            };
-            
-            // Aumenta a área de interação
-            const interactionRect = {
-                x: playerRect.x - 20,
-                y: playerRect.y - 20,
-                width: playerRect.width + 40,
-                height: playerRect.height + 40
-            };
-            
-            if (Utils.collisionCheck(interactionRect, npcRect)) {
-                this.currentInteractable = npc;
-                
-                // Mostra dica de interação
-                this.showInteractionHint('E');
-                
-                break;
-            }
-        }
-        
-        // Verifica objetos se não encontrou NPC
-        if (!this.currentInteractable) {
-            for (const obj of phase.objects) {
-                const objRect = {
-                    x: obj.x - 32,
-                    y: obj.y - 32,
+        // Verifica NPCs
+        if (phase.npcs) {
+            for (const npc of phase.npcs) {
+                const npcRect = {
+                    x: npc.x,
+                    y: npc.y,
                     width: 64,
                     height: 64
                 };
                 
                 const playerRect = {
-                    x: this.player.x - this.player.width / 2,
-                    y: this.player.y - this.player.height / 2,
+                    x: this.player.x,
+                    y: this.player.y,
                     width: this.player.width,
                     height: this.player.height
                 };
                 
                 // Aumenta a área de interação
                 const interactionRect = {
-                    x: playerRect.x - 20,
-                    y: playerRect.y - 20,
-                    width: playerRect.width + 40,
-                    height: playerRect.height + 40
+                    x: playerRect.x - 30,
+                    y: playerRect.y - 30,
+                    width: playerRect.width + 60,
+                    height: playerRect.height + 60
+                };
+                
+                if (Utils.collisionCheck(interactionRect, npcRect)) {
+                    this.currentInteractable = npc;
+                    this.showInteractionHint('E');
+                    break;
+                }
+            }
+        }
+        
+        // Verifica objetos se não encontrou NPC
+        if (!this.currentInteractable && phase.objects) {
+            for (const obj of phase.objects) {
+                const objRect = {
+                    x: obj.x,
+                    y: obj.y,
+                    width: 64,
+                    height: 64
+                };
+                
+                const playerRect = {
+                    x: this.player.x,
+                    y: this.player.y,
+                    width: this.player.width,
+                    height: this.player.height
+                };
+                
+                // Aumenta a área de interação
+                const interactionRect = {
+                    x: playerRect.x - 30,
+                    y: playerRect.y - 30,
+                    width: playerRect.width + 60,
+                    height: playerRect.height + 60
                 };
                 
                 if (Utils.collisionCheck(interactionRect, objRect)) {
                     this.currentInteractable = obj;
-                    
-                    // Mostra dica de interação
                     if (obj.hackable) {
                         this.showInteractionHint('E / F');
                     } else {
                         this.showInteractionHint('E');
                     }
-                    
                     break;
                 }
             }
@@ -344,13 +345,22 @@ class Game {
     
     // Mostra dica de interação
     showInteractionHint(key) {
-        // Implementação visual da dica de interação
-        // (pode ser implementada com um elemento HTML ou canvas)
+        const hint = document.createElement('div');
+        hint.id = 'interaction-hint';
+        hint.className = 'interaction-hint';
+        hint.textContent = `Pressione ${key}`;
+        
+        // Remove dica anterior se existir
+        const oldHint = document.getElementById('interaction-hint');
+        if (oldHint) oldHint.remove();
+        
+        document.body.appendChild(hint);
     }
     
     // Esconde dica de interação
     hideInteractionHint() {
-        // Implementação para esconder a dica
+        const hint = document.getElementById('interaction-hint');
+        if (hint) hint.remove();
     }
     
     // Interage com o objeto atual
@@ -360,28 +370,31 @@ class Game {
         // Toca som de interação
         Assets.playSound('interact');
         
-        // Inicia diálogo
+        // Se o objeto tem diálogo
         if (this.currentInteractable.dialogue) {
+            const dialogue = this.currentInteractable.dialogue;
+            
             // Verifica se é um NPC com missão completada
             if (this.currentInteractable.name && 
-                this.missions.includes(`Extrair dados do terminal`) && 
-                this.completedMissions.includes(`Extrair dados do terminal`) &&
+                this.missions.includes('Extrair dados do terminal') && 
+                this.completedMissions.includes('Extrair dados do terminal') &&
                 this.currentInteractable.name === 'Contato') {
                 
-                // Mostra diálogo de missão completada
                 this.dialogue.show(
                     this.currentInteractable.name,
-                    this.currentInteractable.dialogue.completion.text,
-                    this.currentInteractable.dialogue.completion.options
+                    dialogue.completion.text,
+                    dialogue.completion.options,
+                    dialogue.completion
                 );
                 return;
             }
             
-            // Diálogo inicial padrão
+            // Diálogo inicial
             this.dialogue.show(
                 this.currentInteractable.name || 'Objeto',
-                this.currentInteractable.dialogue.initial,
-                this.currentInteractable.dialogue.options
+                dialogue.initial,
+                dialogue.options,
+                dialogue
             );
         }
     }
@@ -398,9 +411,7 @@ class Game {
     addMission(mission) {
         if (!this.missions.includes(mission)) {
             this.missions.push(mission);
-            console.log(`Nova missão: ${mission}`);
-            
-            // Mostra notificação de nova missão
+            this.updateMissionList();
             this.showNotification(`Nova missão: ${mission}`);
         }
     }
@@ -409,21 +420,23 @@ class Game {
     completeMission(mission) {
         if (this.missions.includes(mission) && !this.completedMissions.includes(mission)) {
             this.completedMissions.push(mission);
-            console.log(`Missão completada: ${mission}`);
-            
-            // Mostra notificação de missão completada
+            this.updateMissionList();
             this.showNotification(`Missão completada: ${mission}`);
-            
-            // Recompensa de karma
             this.changeKarma(15);
         }
     }
     
     // Mostra uma notificação
     showNotification(text) {
-        // Implementação visual da notificação
-        // (pode ser implementada com um elemento HTML temporário)
-        console.log(`Notificação: ${text}`);
+        const notification = document.createElement('div');
+        notification.className = 'notification';
+        notification.textContent = text;
+        document.body.appendChild(notification);
+        
+        // Remove a notificação após a animação
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
     }
     
     // Altera o karma do jogador
@@ -487,8 +500,35 @@ class Game {
     
     // Redimensiona o canvas quando a janela muda de tamanho
     resize() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
+        const gameContainer = document.getElementById('game-container');
+        if (gameContainer) {
+            gameContainer.style.width = this.width + 'px';
+            gameContainer.style.height = this.height + 'px';
+            gameContainer.style.transform = '';
+        }
+        this.updateMissionList();
+    }
+    
+    updateMissionList() {
+        const missionList = document.getElementById('mission-list');
+        if (!missionList) return;
+        let html = '<b>Missões:</b><br>';
+        if (this.missions.length === 0) {
+            html += "<span style='color:#888'>Nenhuma missão ativa</span>";
+        } else {
+            this.missions.forEach(mission => {
+                if (this.completedMissions.includes(mission)) {
+                    html += `<span style='color:#0f0'>✔ ${mission}</span><br>`;
+                } else {
+                    html += `<span style='color:#0df2c9'>${mission}</span><br>`;
+                }
+            });
+        }
+        missionList.innerHTML = html;
     }
 }
 

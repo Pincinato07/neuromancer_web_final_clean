@@ -7,39 +7,42 @@
 
 body {
     background-color: #0a0a0a;
-    font-family: 'Courier New', monospace;
+    font-family: 'Press Start 2P', monospace;
     color: #0df2c9;
     overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
 }
 
 #game-container {
-    position: relative;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100vw;
     height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    overflow: hidden;
+    background-color: #000;
 }
 
 #game-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-    image-rendering: pixelated; /* Mantém a estética pixel art */
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
 }
 
-/* UI Overlay */
-#ui-overlay {
+#ui-container {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 2;
-    pointer-events: none; /* Permite clicar através do UI para o canvas */
+    pointer-events: none;
+    padding: 20px;
+    z-index: 10;
 }
 
 #energy-bar-container {
@@ -49,55 +52,59 @@ body {
     width: 200px;
     height: 20px;
     background-color: rgba(0, 0, 0, 0.5);
-    border: 2px solid #0df2c9;
+    border: 2px solid #00FFFF;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
 }
 
 #energy-bar {
-    height: 100%;
     width: 100%;
-    background-color: #0df2c9;
+    height: 100%;
+    background-color: #00FFFF;
     transition: width 0.3s;
 }
 
 #karma-indicator {
     position: absolute;
-    top: 50px;
+    top: 20px;
+    right: 20px;
+    color: #AA00FF;
+    font-size: 16px;
+    text-shadow: 0 0 5px #AA00FF;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    border: 2px solid #AA00FF;
+    box-shadow: 0 0 10px rgba(170, 0, 255, 0.5);
+}
+
+#mission-list {
+    position: absolute;
+    top: 60px;
     left: 20px;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background-color: #ff00ff; /* Cor padrão (neutro) */
-    border: 2px solid #ffffff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    color: #00FFFF;
+    font-size: 12px;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    border: 1px solid #00FFFF;
+    min-width: 200px;
 }
 
-#karma-value {
-    font-size: 18px;
-    font-weight: bold;
-    color: #ffffff;
-}
-
-/* Diálogo */
 #dialogue-box {
     position: absolute;
-    bottom: 30px;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
     width: 80%;
     max-width: 800px;
     background-color: rgba(0, 0, 0, 0.8);
-    border: 2px solid #0df2c9;
+    border: 2px solid #00FFFF;
     padding: 20px;
-    color: #ffffff;
-    pointer-events: auto; /* Permite interação */
+    color: #FFFFFF;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
 }
 
 #dialogue-text {
-    margin-bottom: 15px;
-    font-size: 18px;
-    line-height: 1.4;
+    margin-bottom: 20px;
 }
 
 #dialogue-options {
@@ -107,135 +114,134 @@ body {
 }
 
 .dialogue-option {
-    padding: 8px 15px;
-    background-color: #1a1a1a;
-    border: 1px solid #0df2c9;
-    color: #0df2c9;
+    background-color: rgba(0, 255, 255, 0.2);
+    border: 1px solid #00FFFF;
+    color: #FFFFFF;
+    padding: 10px;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.3s;
 }
 
 .dialogue-option:hover {
-    background-color: #0df2c9;
-    color: #000000;
+    background-color: rgba(0, 255, 255, 0.4);
 }
 
-/* Telas de Loading e Start */
-#loading-screen, #start-screen {
+#hack-minigame {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: #000000;
-    z-index: 10;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 800px;
+    height: 80%;
+    max-height: 600px;
+    background-color: rgba(0, 0, 0, 0.9);
+    border: 2px solid #00FFFF;
     display: flex;
-    justify-content: center;
-    align-items: center;
     flex-direction: column;
+    padding: 20px;
 }
 
-.loading-content, .start-content {
-    text-align: center;
-    max-width: 600px;
-}
-
-h1 {
-    font-size: 36px;
-    margin-bottom: 30px;
-    color: #ff00ff;
-    text-shadow: 0 0 10px #ff00ff;
-}
-
-.loading-bar-container {
-    width: 100%;
-    height: 20px;
-    background-color: #1a1a1a;
-    border: 2px solid #0df2c9;
+#hack-header {
+    display: flex;
+    justify-content: space-between;
+    color: #00FFFF;
+    font-family: 'Press Start 2P', monospace;
     margin-bottom: 20px;
 }
 
-.loading-bar {
-    height: 100%;
-    width: 0%;
-    background-color: #0df2c9;
-    transition: width 0.5s;
+#hack-canvas {
+    flex-grow: 1;
+    border: 1px solid #00FFFF;
 }
 
-.loading-text {
-    font-size: 18px;
-    color: #0df2c9;
+.hidden {
+    display: none !important;
 }
 
-#start-button {
-    margin-top: 30px;
-    padding: 15px 40px;
-    font-size: 24px;
-    background-color: transparent;
-    border: 2px solid #ff00ff;
-    color: #ff00ff;
-    cursor: pointer;
-    font-family: 'Courier New', monospace;
-    transition: all 0.3s;
-}
-
-#start-button:hover {
-    background-color: #ff00ff;
-    color: #000000;
-    box-shadow: 0 0 20px #ff00ff;
-}
-
-.controls-info {
-    margin-top: 40px;
-    color: #999999;
-}
-
-.controls-info p {
-    margin-bottom: 5px;
-}
-
-/* Minigame de Hack */
-#hack-minigame {
-    position: absolute;
+.phase-transition {
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.9);
-    z-index: 5;
     display: flex;
     justify-content: center;
     align-items: center;
+    z-index: 1000;
+    opacity: 1;
+    transition: opacity 1s;
 }
 
-#hack-canvas {
-    border: 3px solid #ff00ff;
-    background-color: #000000;
-    width: 80%;
-    max-width: 800px;
-    height: 80%;
-    max-height: 600px;
+.phase-transition h2 {
+    color: #00FFFF;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 32px;
+    text-align: center;
+    text-shadow: 0 0 10px #00FFFF;
 }
 
-#hack-ui {
-    position: absolute;
-    top: 20px;
+.phase-transition.fade-out {
+    opacity: 0;
+}
+
+.notification {
+    position: fixed;
+    top: 100px;
     right: 20px;
-    text-align: right;
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 2px solid #00FFFF;
+    color: #FFFFFF;
+    padding: 10px 20px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    animation: notification-slide 0.3s ease-out, notification-fade 0.3s ease-out 2.7s;
+    z-index: 1000;
 }
 
-#hack-timer {
-    font-size: 36px;
-    color: #ff00ff;
-    margin-bottom: 10px;
+@keyframes notification-slide {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
 }
 
-#hack-status {
-    font-size: 18px;
-    color: #0df2c9;
+@keyframes notification-fade {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
 }
 
-/* Utilitários */
-.hidden {
-    display: none !important;
+.interaction-hint {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -100px);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #00FFFF;
+    padding: 10px 20px;
+    border: 2px solid #00FFFF;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    z-index: 1000;
+    pointer-events: none;
+    animation: hint-fade 0.3s ease-in-out;
+    text-shadow: 0 0 5px #00FFFF;
+}
+
+@keyframes hint-fade {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -90px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -100px);
+    }
 }

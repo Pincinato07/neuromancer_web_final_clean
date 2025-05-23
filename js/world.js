@@ -166,54 +166,57 @@ class World {
     draw(context) {
         this.game.log("    [World] Iniciando draw...");
         try {
-            // Desenha o background
-            this.game.log("      [World] Tentando obter asset 'chibaCityBg'...");
-            const bgImage = window.AssetManager.get("chibaCityBg");
+            // Obtém a fase atual
+            const phase = this.game.phases.getCurrentPhase();
+            
+            // Desenha o background da fase
+            this.game.log(`      [World] Tentando obter asset '${phase.background}'...`);
+            const bgImage = this.game.assets.images[phase.background];
             if (!bgImage) {
-                this.game.log("ERRO: Asset 'chibaCityBg' não encontrado ou não carregado!");
+                this.game.log(`ERRO: Asset '${phase.background}' não encontrado ou não carregado!`);
                 // Desenhar fundo de fallback
                 context.fillStyle = '#333';
-                context.fillRect(0, 0, this.game.width, this.game.height);
+                context.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
                 context.fillStyle = '#FFF';
-                context.fillText("Erro ao carregar background", this.game.width / 2, this.game.height / 2);
+                context.fillText("Erro ao carregar background", this.game.canvas.width / 2, this.game.canvas.height / 2);
                 this.game.log("    [World] Draw interrompido (falha no background).");
-                return; // Não continuar renderizando se o fundo falhar
+                return;
             }
             this.game.log("      [World] Desenhando background...");
-            context.drawImage(bgImage, 0, 0, this.game.width, this.game.height);
+            context.drawImage(bgImage, 0, 0, this.game.canvas.width, this.game.canvas.height);
             
             // Desenha objetos interativos
             this.game.log("      [World] Desenhando interativos...");
             this.interactables.forEach(interactable => {
-                // ... (código de desenho dos interativos mantido)
                 if (interactable.type === 'terminal') {
-                    const terminalImage = window.AssetManager.get('terminal');
-                    if (terminalImage) context.drawImage(terminalImage, interactable.x, interactable.y, interactable.width, interactable.height);
-                    // ... (highlight e texto mantidos)
+                    const terminalImage = this.game.assets.images['terminal'];
+                    if (terminalImage) {
+                        context.drawImage(terminalImage, interactable.x, interactable.y, interactable.width, interactable.height);
+                    }
                 } else if (interactable.type === 'info') {
-                    // ... (desenho do info mantido)
+                    context.fillStyle = '#FF00FF';
+                    context.fillRect(interactable.x, interactable.y, interactable.width, interactable.height);
                 }
             });
             
             // Desenha NPCs
             this.game.log("      [World] Desenhando NPCs...");
             this.npcs.forEach(npc => {
-                const npcImage = window.AssetManager.get('npcContact');
+                const npcImage = this.game.assets.images[npc.sprite || 'npcContact'];
                 if (!npcImage) {
-                    this.game.log(`ERRO: Asset 'npcContact' não encontrado para NPC ${npc.name}`);
-                    return; // Pular desenho deste NPC
+                    this.game.log(`ERRO: Asset '${npc.sprite || 'npcContact'}' não encontrado para NPC ${npc.name}`);
+                    return;
                 }
-                // ... (código de desenho do NPC mantido)
+                
                 context.save();
                 if (npc.direction === -1) {
-                    context.translate(npc.x + npc.width, npc.y); // Corrigido Y
+                    context.translate(npc.x + npc.width, npc.y);
                     context.scale(-1, 1);
-                    context.drawImage(npcImage, 0, 0, npc.width, npc.height, 0, 0, npc.width, npc.height); // Corrigido Y
+                    context.drawImage(npcImage, 0, 0, npc.width, npc.height);
                 } else {
                     context.drawImage(npcImage, npc.x, npc.y, npc.width, npc.height);
                 }
                 context.restore();
-                // ... (highlight e texto mantidos)
             });
             
             // Desenha obstáculos (apenas em modo debug)
@@ -225,6 +228,7 @@ class World {
                     context.strokeRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
                 });
             }
+            
             this.game.log("    [World] Draw concluído.");
         } catch (error) {
             this.game.log(`ERRO CRÍTICO durante [World] draw: ${error.message} \n ${error.stack}`);
@@ -243,5 +247,42 @@ class World {
         });
         
         return collided;
+    }
+    
+    // Carrega os elementos de uma fase específica
+    loadPhase(phase) {
+        // Limpa os elementos atuais
+        this.interactables = [];
+        this.npcs = [];
+        this.obstacles = [];
+        
+        // Carrega NPCs da fase
+        if (phase.npcs) {
+            this.npcs = phase.npcs.map(npc => ({
+                ...npc,
+                width: 64,
+                height: 64,
+                direction: -1,
+                highlight: false
+            }));
+        }
+        
+        // Carrega objetos interativos da fase
+        if (phase.objects) {
+            this.interactables = phase.objects.map(obj => ({
+                ...obj,
+                type: obj.hackable ? 'terminal' : 'info',
+                width: obj.width || 64,
+                height: obj.height || 64,
+                highlight: false
+            }));
+        }
+        
+        // Carrega obstáculos da fase
+        if (phase.boundaries) {
+            this.obstacles = phase.boundaries;
+        }
+        
+        console.log(`Fase carregada: ${phase.name}`);
     }
 }

@@ -1,5 +1,5 @@
 // Correção do sistema de minigame de hack
-class HackingSystem {
+class HackMinigame {
     constructor(game) {
         this.game = game;
         this.active = false;

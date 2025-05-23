@@ -84,6 +84,94 @@
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
+        
+        .touch-btn:hover {
+            background-color: rgba(0, 255, 255, 0.5);
+        }
+
+        /* Estilos para tela de carregamento */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .loading-bar {
+            width: 70%;
+            height: 20px;
+            border: 2px solid #00FFFF;
+            margin: 20px 0;
+        }
+        
+        .loading-bar > div {
+            height: 100%;
+            width: 0%;
+            background-color: #00FFFF;
+            transition: width 0.3s;
+        }
+        
+        .loading-text {
+            color: #00FFFF;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 16px;
+        }
+        
+        /* Estilos para tela de início */
+        #start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        #start-screen h1 {
+            color: #00FFFF;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+        
+        #start-screen h2 {
+            color: #FF00FF;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 24px;
+            margin-bottom: 40px;
+        }
+        
+        #start-button {
+            background-color: #00FFFF;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        #start-button:hover {
+            background-color: #FF00FF;
+            color: #FFF;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -100,6 +188,19 @@
     </div>
 
     <div id="game-container">
+        <!-- Tela de carregamento -->
+        <div id="loading-screen">
+            <div class="loading-bar"></div>
+            <div class="loading-text">Carregando... 0%</div>
+        </div>
+        
+        <!-- Tela de início -->
+        <div id="start-screen" class="hidden">
+            <h1>NEUROMANCER</h1>
+            <h2>SOMBRA NA MATRIX</h2>
+            <button id="start-button">Iniciar Jogo</button>
+        </div>
+        
         <!-- Canvas principal do jogo -->
         <canvas id="game-canvas"></canvas>
         
@@ -108,7 +209,9 @@
             <div id="energy-bar-container">
                 <div id="energy-bar"></div>
             </div>
-            <div id="karma-indicator">Karma: 0</div>
+            <div id="karma-indicator">
+                <span id="karma-value">0</span>
+            </div>
             <div id="mission-list">Missões:</div>
         </div>
         
@@ -193,9 +296,10 @@
             if (typeof window.game === 'undefined') {
                 updateEmergencyLoading(0.2, 'Carregando scripts principais...');
                 
-               const scripts = [
+                const scripts = [
                     'js/utils.js',
                     'js/assets.js',
+                    'js/camera.js',
                     'js/player.js',
                     'js/world.js',
                     'js/dialogue.js',
@@ -214,16 +318,14 @@
                     script.onload = () => {
                         loadedScripts++;
                         updateEmergencyLoading(0.2 + (loadedScripts / scripts.length) * 0.6, 
-                            `Carregado: ${src.split('/').pop()}`);
-                        
-                        // Se todos os scripts carregaram, verificar se o jogo iniciou
+                            `Carregado ${loadedScripts}/${scripts.length} scripts`);
+                        // Quando todos carregarem, tenta iniciar o jogo
                         if (loadedScripts === scripts.length) {
                             setTimeout(() => {
                                 if (typeof window.game === 'undefined') {
                                     updateEmergencyLoading(0.9, 'Iniciando jogo manualmente...');
-                                    
-                                    // Tentar iniciar o jogo manualmente
                                     try {
+                                        console.log('Tentando iniciar o jogo...');
                                         window.game = new Game();
                                         updateEmergencyLoading(1, 'Jogo iniciado!');
                                         setTimeout(hideEmergencyLoading, 1000);
@@ -239,29 +341,8 @@
                         }
                     };
                     
-                    script.onerror = () => {
-                        updateEmergencyLoading(0.2 + (index / scripts.length) * 0.6, 
-                            `ERRO ao carregar: ${src.split('/').pop()}`);
-                        
-                        // Continuar mesmo com erro
-                        loadedScripts++;
-                    };
-                    
-                    document.body.appendChild(script);
+                    document.head.appendChild(script);
                 });
-            } else {
-                // Jogo já foi iniciado normalmente
-                updateEmergencyLoading(1, 'Jogo iniciado!');
-                setTimeout(hideEmergencyLoading, 1000);
-            }
-        }, 5000);
-        
-        // Verificar periodicamente se o jogo foi iniciado
-        const gameCheckInterval = setInterval(() => {
-            if (typeof window.game !== 'undefined' && window.game.gameState !== 'loading') {
-                updateEmergencyLoading(1, 'Jogo iniciado!');
-                setTimeout(hideEmergencyLoading, 1000);
-                clearInterval(gameCheckInterval);
             }
         }, 1000);
     </script>
